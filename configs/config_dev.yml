@@ -1,0 +1,21 @@
+db:
+  name: commercecore
+  host: localhost
+  port: 5432
+  username: postgres
+  ssl_mode: disable
+
+server:
+  host: localhost
+  port: 8080
+
+redis:
+  addr: localhost:6379
+
+kafka:
+  brokers: localhost:9092
+  topics:
+    order_created: order.created
+    payment_succeeded: payment.succeeded
+  group_id: commercecore-group
+
