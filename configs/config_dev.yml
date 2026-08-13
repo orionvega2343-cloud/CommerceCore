@@ -19,3 +19,6 @@ kafka:
     payment_succeeded: payment.succeeded
   group_id: commercecore-group
 
+jwt:
+  access_ttl: 15m
+  refresh_ttl: 168h
