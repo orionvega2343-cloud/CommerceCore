@@ -50,14 +50,13 @@ func (t *Transactor) Transaction(ctx context.Context, fn func(ctx context.Contex
 			panic(rec)
 		}
 		if err != nil {
-			err = trx.Rollback()
-			if err != nil {
-				slog.Error("failed to rollback transaction", "error", err)
+			if rbErr := trx.Rollback(); rbErr != nil {
+				slog.Error("failed to rollback transaction", "error", rbErr)
 			}
 		} else {
-			err = trx.Commit()
-			if err != nil {
-				slog.Error("failed to commit transaction", "error", err)
+			if cErr := trx.Commit(); cErr != nil {
+				slog.Error("failed to commit transaction", "error", cErr)
+				err = cErr
 			}
 		}
 	}()
