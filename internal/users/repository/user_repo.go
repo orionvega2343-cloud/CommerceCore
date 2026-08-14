@@ -7,6 +7,8 @@ import (
 	"log/slog"
 )
 
+var _ domain.UserRepo = (*UserRepoImpl)(nil)
+
 type UserRepoImpl struct {
 	q querier.Querier
 }
@@ -34,17 +36,17 @@ func (r *UserRepoImpl) GetUserByID(ctx context.Context, id string) (*domain.User
 	return m, nil
 }
 
-func (r *UserRepoImpl) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
-	var m *domain.User
+func (r *UserRepoImpl) GetUserByEmail(ctx context.Context, email string) (domain.User, error) {
+	var m domain.User
 	err := r.q.GetContext(ctx, &m, `SELECT id, email, password, role, created_at FROM users WHERE email = $1`, email)
 	if err != nil {
 		slog.Error("failed to connect to database", "error", err)
-		return nil, err
+		return domain.User{}, err
 	}
 	return m, nil
 }
 
-func (r *UserRepoImpl) UpdateUser(ctx context.Context, m *domain.User) error {
+func (r *UserRepoImpl) UpdateUser(ctx context.Context, m domain.User) error {
 	_, err := r.q.ExecContext(ctx, `UPDATE users SET email = $1, password = $2 WHERE id = $3`, m.Email, m.Password, m.Id)
 	if err != nil {
 		slog.Error("failed to connect to database", "error", err)
