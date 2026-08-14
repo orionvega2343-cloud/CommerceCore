@@ -5,7 +5,6 @@ import "time"
 type UserResponse struct {
 	Id        string    `json:"id"`
 	Email     string    `json:"email"`
-	Password  string    `json:"password"`
 	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
 }

@@ -47,7 +47,7 @@ func (o *UserServiceImpl) Login(ctx context.Context, email string, password stri
 	user, err := o.repo.GetUserByEmail(ctx, email)
 	if err != nil {
 		slog.Error("failed to get user by email", "error", err)
-		return "", err
+		return "", domain.FailedToGetUser
 	}
 	//Проверяем, что хэширование применилось и пароль существует
 	comparePass := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
