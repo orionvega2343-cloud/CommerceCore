@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"CommerceCore/internal/users/domain"
 	"fmt"
 	"os"
 	"strings"
@@ -8,13 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
-
-// Claims - структура полезной нагрузки JWT токена,
-// содержит user_id и стандартные поля (exp, iat и тп)
-type Claims struct {
-	UserId string `json:"user_id"`
-	jwt.RegisteredClaims
-}
 
 // Auth - middleware для проверки JWT токена,
 // ожидает заголовок Authorization: Bearer <token>,
@@ -37,7 +31,7 @@ func Auth() gin.HandlerFunc {
 		tokenString := parts[1]
 
 		//Парсим и валидируем токен
-		claims := &Claims{}
+		claims := &domain.Claims{}
 		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
