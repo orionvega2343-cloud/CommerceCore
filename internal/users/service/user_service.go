@@ -59,6 +59,7 @@ func (o *UserServiceImpl) Login(ctx context.Context, email string, password stri
 	var c domain.Claims
 	c.Email = email
 	c.UserId = user.Id
+	c.Role = user.Role
 	//Устанавливаем срок действия JWT токена
 	//TODO: пробросить TTL из конфига
 	c.ExpiresAt = jwt.NewNumericDate(time.Now().Add(time.Hour * 24))
