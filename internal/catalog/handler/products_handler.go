@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var _ domain.ProductHandler = (*ProductsHandlerImpl)(nil)
+
 type ProductsHandlerImpl struct {
 	svc domain.ProductService
 }
