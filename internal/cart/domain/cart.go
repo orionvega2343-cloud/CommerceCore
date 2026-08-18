@@ -7,7 +7,7 @@ import (
 
 type Cart struct {
 	Id        int       `db:"id"`
-	UserID    int       `db:"user_id"`
+	UserID    string    `db:"user_id"`
 	Status    string    `db:"status"`
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
