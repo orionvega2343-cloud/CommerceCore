@@ -52,3 +52,12 @@ func (r *RedisRepoImpl) SetGuestCart(ctx context.Context, guestId string, cart d
 	}
 	return nil
 }
+
+func (r *RedisRepoImpl) DelGuestCart(ctx context.Context, guestId string) error {
+	key := fmt.Sprintf("guestCart:%s", guestId)
+	if err := r.redis.Del(ctx, key).Err(); err != nil {
+		slog.Error("failed to delete cart from redis", "error", err)
+		return err
+	}
+	return nil
+}
