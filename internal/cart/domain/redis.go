@@ -8,4 +8,5 @@ import (
 type RedisRepo interface {
 	GetGuestCart(ctx context.Context, guestId string) (*Cart, error)
 	SetGuestCart(ctx context.Context, guestId string, item *Cart, ttl time.Duration) error
+	DeleteGuestCart(ctx context.Context, guestId string) error
 }
