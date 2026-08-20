@@ -1,8 +1,11 @@
 package service
 
 import (
+	cart "CommerceCore/internal/cart/domain"
+	"CommerceCore/internal/cart/domain/errs"
 	"CommerceCore/internal/users/domain"
 	"context"
+	"errors"
 	"log/slog"
 	"time"
 
@@ -14,6 +17,7 @@ var _ domain.UserService = (*UserServiceImpl)(nil)
 
 type UserServiceImpl struct {
 	repo   domain.UserRepo
+	cart   cart.CartService
 	secret string
 }
 
@@ -43,7 +47,7 @@ func (o *UserServiceImpl) Register(ctx context.Context, user *domain.User) (*dom
 // Login - авторизует пользователя по Email,
 // проверяет, что пароль успешно хэширован
 // и пропускает пользователя
-func (o *UserServiceImpl) Login(ctx context.Context, email string, password string) (string, error) {
+func (o *UserServiceImpl) Login(ctx context.Context, email, password, guestId string) (string, error) {
 	user, err := o.repo.GetUserByEmail(ctx, email)
 	if err != nil {
 		slog.Error("failed to get user by email", "error", err)
@@ -54,6 +58,11 @@ func (o *UserServiceImpl) Login(ctx context.Context, email string, password stri
 	if comparePass != nil {
 		slog.Error("failed to compare password")
 		return "", domain.InvalidPassword
+	}
+
+	//Слияние гостевой корзины с корзиной из БД, после проверки пароля
+	if err := o.cart.MergeGuestCart(ctx, guestId, user.Id); err != nil && !errors.Is(err, errs.CartNotFound) {
+		slog.Error("failed to merge guest cart", "error", err)
 	}
 
 	var c domain.Claims
