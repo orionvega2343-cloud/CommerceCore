@@ -15,7 +15,7 @@ type Cart struct {
 }
 
 func (c *Cart) Checkout() error {
-	if c.Status == "active" {
+	if c.Status != "active" {
 		return errs.FailedCheckedOut
 	}
 	if len(c.Items) == 0 {
