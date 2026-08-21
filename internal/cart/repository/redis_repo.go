@@ -39,7 +39,7 @@ func (r *RedisRepoImpl) GetGuestCart(ctx context.Context, guestId string) (*doma
 	return &cart, nil
 }
 
-func (r *RedisRepoImpl) SetGuestCart(ctx context.Context, guestId string, cart domain.Cart, ttl time.Duration) error {
+func (r *RedisRepoImpl) SetGuestCart(ctx context.Context, guestId string, cart *domain.Cart, ttl time.Duration) error {
 	key := fmt.Sprintf("guestCart:%s", guestId)
 	data, err := json.Marshal(cart)
 	if err != nil {
@@ -53,7 +53,7 @@ func (r *RedisRepoImpl) SetGuestCart(ctx context.Context, guestId string, cart d
 	return nil
 }
 
-func (r *RedisRepoImpl) DelGuestCart(ctx context.Context, guestId string) error {
+func (r *RedisRepoImpl) DeleteGuestCart(ctx context.Context, guestId string) error {
 	key := fmt.Sprintf("guestCart:%s", guestId)
 	if err := r.redis.Del(ctx, key).Err(); err != nil {
 		slog.Error("failed to delete cart from redis", "error", err)
