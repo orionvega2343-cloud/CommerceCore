@@ -1,6 +1,6 @@
-package dto
+package domain
 
-type OrderItemResponse struct {
+type OrderItem struct {
 	Id           int `json:"id"`
 	OrderId      int `json:"order_id"`
 	ProductId    int `json:"product_id"`
