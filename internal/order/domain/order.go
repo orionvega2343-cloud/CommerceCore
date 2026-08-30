@@ -8,6 +8,7 @@ import (
 type Order struct {
 	Id          int       `db:"id"`
 	UserId      string    `db:"user_id"`
+	CartId      int       `db:"cart_id"`
 	Status      string    `db:"status"`
 	TotalAmount int       `db:"total_amount"`
 	CreatedAt   time.Time `db:"created_at"`
