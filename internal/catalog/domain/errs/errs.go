@@ -12,3 +12,5 @@ var ProductNotFound = errors.New("product not found")
 
 // Service
 var InvalidRole = errors.New("invalid role")
+
+var InsufficientStock = errors.New("insufficient stock")

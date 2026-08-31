@@ -2,7 +2,9 @@ package repository
 
 import (
 	"CommerceCore/internal/catalog/domain"
+	"CommerceCore/internal/catalog/domain/errs"
 	"CommerceCore/pkg/querier"
+	"CommerceCore/pkg/transaction"
 	"context"
 	"log/slog"
 )
@@ -10,7 +12,8 @@ import (
 var _ domain.ProductRepo = (*ProductRepoImpl)(nil)
 
 type ProductRepoImpl struct {
-	q querier.Querier
+	q           querier.Querier
+	transaction transaction.Transactor
 }
 
 func NewProductRepoImpl(q querier.Querier) *ProductRepoImpl {
@@ -70,6 +73,28 @@ func (r *ProductRepoImpl) DeleteProduct(ctx context.Context, productId int) erro
 	if err != nil {
 		slog.Error("error deleting product from database", "error", err)
 		return err
+	}
+	return nil
+}
+
+func (r *ProductRepoImpl) DecrementStock(ctx context.Context, productID, qty int) error {
+	tx, ok := transaction.ExtractTx(ctx)
+	q := r.q
+	if ok {
+		q = tx
+	}
+	res, err := q.ExecContext(ctx, `UPDATE products SET stock_quantity = stock_quantity - $1 WHERE id = $2 AND stock_quantity >= $1`, qty, productID)
+	if err != nil {
+		slog.Error("error decrementing stock", "error", err)
+		return err
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		slog.Error("error getting rows affected", "error", err)
+		return err
+	}
+	if affected == 0 {
+		return errs.InsufficientStock
 	}
 	return nil
 }
