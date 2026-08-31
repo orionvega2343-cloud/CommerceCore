@@ -3,6 +3,7 @@ package repository
 import (
 	"CommerceCore/internal/cart/domain"
 	"CommerceCore/pkg/querier"
+	"CommerceCore/pkg/transaction"
 	"context"
 	"log/slog"
 )
@@ -40,4 +41,18 @@ func (r *CartItemRepoImpl) Delete(ctx context.Context, id int) error {
 		return err
 	}
 	return nil
+}
+
+func (r *CartItemRepoImpl) LoadItems(ctx context.Context, cartID int) ([]domain.CartItem, error) {
+	q := r.q
+	if tx, ok := transaction.ExtractTx(ctx); ok {
+		q = tx
+	}
+	var items []domain.CartItem
+	if err := q.SelectContext(ctx, &items, `SELECT id, cart_id, product_id, quantity, price_snapshot FROM cart_items WHERE cart_id = $1`, cartID); err != nil {
+		slog.Error("failed load items", "error", err)
+		return nil, err
+	}
+	return items, nil
+
 }

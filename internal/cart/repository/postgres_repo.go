@@ -3,6 +3,7 @@ package repository
 import (
 	"CommerceCore/internal/cart/domain"
 	"CommerceCore/pkg/querier"
+	"CommerceCore/pkg/transaction"
 	"context"
 	"database/sql"
 	"errors"
@@ -10,11 +11,12 @@ import (
 )
 
 type CartRepoImpl struct {
-	q querier.Querier
+	q     querier.Querier
+	items *CartItemRepoImpl
 }
 
-func NewCartRepo(q querier.Querier) *CartRepoImpl {
-	return &CartRepoImpl{q: q}
+func NewCartRepo(q querier.Querier, items *CartItemRepoImpl) *CartRepoImpl {
+	return &CartRepoImpl{q: q, items: items}
 }
 
 func (r *CartRepoImpl) CreateOrGet(ctx context.Context, userId string) (*domain.Cart, error) {
@@ -32,4 +34,20 @@ func (r *CartRepoImpl) CreateOrGet(ctx context.Context, userId string) (*domain.
 		return nil, err
 	}
 	return &c, nil
+}
+
+func (r *CartRepoImpl) LoadItems(ctx context.Context, cartID int) ([]domain.CartItem, error) {
+	return r.items.LoadItems(ctx, cartID)
+}
+
+func (r *CartRepoImpl) SetStatus(ctx context.Context, cartID int, status string) error {
+	q := r.q
+	if tx, ok := transaction.ExtractTx(ctx); ok {
+		q = tx
+	}
+	if _, err := q.ExecContext(ctx, `UPDATE cart SET status = $1 WHERE id = $2`, status, cartID); err != nil {
+		slog.Error("failed to set cart status", "error", err)
+		return err
+	}
+	return nil
 }
