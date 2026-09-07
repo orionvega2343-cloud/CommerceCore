@@ -92,10 +92,7 @@ func (s *OrderServiceImpl) Checkout(ctx context.Context, userId string) (*domain
 				slog.Error("failed to create order item", "error", err)
 				return err
 			}
-			// TODO: DecrementStock(ctx, productID, qty int) error — атомарное списание остатка
-			// для order/domain.StockRepo (Checkout). Нужна проверка достаточности остатка
-			// (UPDATE ... WHERE stock_quantity >= qty, 0 affected rows → ошибка) и участие
-			// в транзакции через transaction.ExtractTx, как в order_repo.go.
+
 			err = s.stock.DecrementStock(ctx, item.ProductId, oItems.Quantity)
 			if err != nil {
 				slog.Error("failed to decrement stock", "error", err)
