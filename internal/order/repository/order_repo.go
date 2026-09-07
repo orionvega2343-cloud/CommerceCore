@@ -2,6 +2,7 @@ package repository
 
 import (
 	"CommerceCore/internal/order/domain"
+	"CommerceCore/internal/order/domain/errs"
 	"CommerceCore/pkg/querier"
 	"CommerceCore/pkg/transaction"
 	"context"
@@ -91,6 +92,31 @@ func (r *OrderRepoImpl) UpdateStatus(ctx context.Context, id int, status string)
 	if err != nil {
 		slog.Error("failed to update order", "error", err)
 		return err
+	}
+	return nil
+}
+
+// MarkOrderPaid - получает доступ к транзакции из домена Payment, через ctx
+// делает атомарный SQL запрос, чтобы сменить статус без race condition,
+// проверяет количество изменившихся строк, если их 0, выбрасывает sentinel error
+func (r *OrderRepoImpl) MarkOrderPaid(ctx context.Context, orderId int) error {
+	q := r.q
+	if tx, ok := transaction.ExtractTx(ctx); ok {
+		q = tx
+	}
+	res, err := q.ExecContext(ctx, `UPDATE orders SET status = 'paid' WHERE id = $1 AND status = 'created'`, orderId)
+	if err != nil {
+		slog.Error("failed to update order", "error", err)
+		return err
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		slog.Error("failed to update order", "error", err)
+		return err
+	}
+	if affected == 0 {
+		return errs.OrderNotPayable
 	}
 	return nil
 }
