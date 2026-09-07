@@ -1,8 +1,8 @@
 package dto
 
+// PaymentRequest - order_id берётся из URL, не отсюда; status клиент не задаёт -
+// он всегда "succeeded", это решает сервис, а не запрос.
 type PaymentRequest struct {
-	OderId int    `json:"oder_id"`
 	Amount int    `json:"amount"`
-	Status string `json:"status"`
 	Method string `json:"method"`
 }

@@ -8,5 +8,5 @@ type PaymentResponse struct {
 	Amount    int       `json:"amount"`
 	Status    string    `json:"status"`
 	Method    string    `json:"method"`
-	CreatedAt time.Time `db:"created_at"`
+	CreatedAt time.Time `json:"created_at"`
 }
