@@ -4,6 +4,7 @@ import (
 	"CommerceCore/internal/users/domain"
 	"CommerceCore/internal/users/dto"
 	"CommerceCore/pkg/response"
+	"CommerceCore/pkg/utils"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -73,6 +74,7 @@ func (u *UserHandlerImpl) Register(c *gin.Context) {
 }
 
 func (u *UserHandlerImpl) Login(c *gin.Context) {
+	cookie := utils.GuestIdFromCookie(c)
 	var req dto.UserRequest
 	if err := c.ShouldBind(&req); err != nil {
 		slog.Error("failed to binding type", "error", err)
@@ -80,7 +82,7 @@ func (u *UserHandlerImpl) Login(c *gin.Context) {
 		return
 	}
 	ctx := c.Request.Context()
-	token, err := u.svc.Login(ctx, req.Email, req.Password)
+	token, err := u.svc.Login(ctx, req.Email, req.Password, cookie)
 	if err != nil {
 		slog.Error("failed to login", "error", err)
 		c.JSON(mapServiceError(err), response.Error{Message: err.Error(), Code: "FAILED_TO_LOGIN_USER"})

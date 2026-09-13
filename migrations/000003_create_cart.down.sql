@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS cart;
+DROP TYPE IF EXISTS status_type;

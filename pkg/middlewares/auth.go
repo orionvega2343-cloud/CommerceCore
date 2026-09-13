@@ -39,6 +39,7 @@ func Auth() gin.HandlerFunc {
 			return []byte(os.Getenv("JWT_SECRET")), nil
 		})
 
+		c.Set("role", claims.Role)
 		//Обработка прочих ошибок или не валидного токена
 		if err != nil || !token.Valid {
 			c.AbortWithStatusJSON(401, gin.H{"error": "Invalid token"})
