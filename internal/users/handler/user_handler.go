@@ -3,6 +3,7 @@ package handler
 import (
 	"CommerceCore/internal/users/domain"
 	"CommerceCore/internal/users/dto"
+	"CommerceCore/pkg/response"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -45,6 +46,8 @@ func mapServiceError(err error) int {
 		return http.StatusNotFound
 	case errors.Is(err, domain.InvalidPassword):
 		return http.StatusUnauthorized
+	case errors.Is(err, domain.InvalidUserRole):
+		return http.StatusBadRequest
 	default:
 		return http.StatusInternalServerError
 	}
@@ -53,10 +56,9 @@ func mapServiceError(err error) int {
 func (u *UserHandlerImpl) Register(c *gin.Context) {
 	var req dto.UserRequest
 
-	err := c.ShouldBind(&req)
-	if err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		slog.Error("failed to binding type", "error", err)
-		c.JSON(http.StatusBadRequest, dto.UserResponse{})
+		c.JSON(http.StatusBadRequest, response.Error{Message: err.Error(), Code: "FAILED_TO_BIND"})
 		return
 	}
 	ctx := c.Request.Context()
@@ -64,7 +66,7 @@ func (u *UserHandlerImpl) Register(c *gin.Context) {
 	created, err := u.svc.Register(ctx, &user)
 	if err != nil {
 		slog.Error("failed to register user", "error", err)
-		c.JSON(mapServiceError(err), dto.UserResponse{})
+		c.JSON(mapServiceError(err), response.Error{Message: err.Error(), Code: "FAILED_TO_REGISTER_USER"})
 		return
 	}
 	c.JSON(http.StatusOK, toUserResponse(created))
@@ -72,21 +74,19 @@ func (u *UserHandlerImpl) Register(c *gin.Context) {
 
 func (u *UserHandlerImpl) Login(c *gin.Context) {
 	var req dto.UserRequest
-
-	err := c.ShouldBind(&req)
-	if err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		slog.Error("failed to binding type", "error", err)
-		c.JSON(http.StatusBadRequest, dto.UserResponse{})
+		c.JSON(http.StatusBadRequest, response.Error{Message: err.Error(), Code: "FAILED_TO_BIND"})
 		return
 	}
 	ctx := c.Request.Context()
 	token, err := u.svc.Login(ctx, req.Email, req.Password)
 	if err != nil {
 		slog.Error("failed to login", "error", err)
-		c.JSON(mapServiceError(err), dto.UserResponse{})
+		c.JSON(mapServiceError(err), response.Error{Message: err.Error(), Code: "FAILED_TO_LOGIN_USER"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	c.JSON(http.StatusOK, dto.LoginResponse{Token: token})
 }
 
 func (u *UserHandlerImpl) GetUserById(c *gin.Context) {
@@ -95,7 +95,7 @@ func (u *UserHandlerImpl) GetUserById(c *gin.Context) {
 	user, err := u.svc.GetById(ctx, id)
 	if err != nil {
 		slog.Error("failed to get user by id", "error", err)
-		c.JSON(mapServiceError(err), dto.UserResponse{})
+		c.JSON(mapServiceError(err), response.Error{Message: err.Error(), Code: "FAILED_TO_GET_USER_BY_ID"})
 		return
 	}
 	c.JSON(http.StatusOK, toUserResponse(user))
@@ -104,19 +104,17 @@ func (u *UserHandlerImpl) GetUserById(c *gin.Context) {
 func (u *UserHandlerImpl) UpdateUser(c *gin.Context) {
 	var req dto.UserRequest
 	id := c.Param("id")
-	err := c.ShouldBind(&req)
-	if err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		slog.Error("failed to binding type", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{})
+		c.JSON(http.StatusBadRequest, response.Error{Message: err.Error(), Code: "FAILED_TO_BIND"})
 		return
 	}
 	ctx := c.Request.Context()
 	user := toDomainUser(req)
 	user.Id = id
-	err = u.svc.UpdateUser(ctx, user)
-	if err != nil {
+	if err := u.svc.UpdateUser(ctx, user); err != nil {
 		slog.Error("failed to update user", "error", err)
-		c.JSON(mapServiceError(err), gin.H{})
+		c.JSON(mapServiceError(err), response.Error{Message: err.Error(), Code: "FAILED_TO_UPDATE_USER"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{})
@@ -126,18 +124,16 @@ func (u *UserHandlerImpl) UpdateRole(c *gin.Context) {
 	id := c.Param("id")
 
 	var req dto.UpdateRoleRequest
-	err := c.ShouldBind(&req)
-	if err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		slog.Error("failed to binding type", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{})
+		c.JSON(http.StatusBadRequest, response.Error{Message: err.Error(), Code: "FAILED_TO_BIND"})
 		return
 	}
 
 	ctx := c.Request.Context()
-	err = u.svc.UpdateRole(ctx, req.Role, id)
-	if err != nil {
+	if err := u.svc.UpdateRole(ctx, req.Role, id); err != nil {
 		slog.Error("failed to update role", "error", err)
-		c.JSON(mapServiceError(err), gin.H{})
+		c.JSON(mapServiceError(err), response.Error{Message: err.Error(), Code: "FAILED_TO_UPDATE_USER_ROLE"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{})
