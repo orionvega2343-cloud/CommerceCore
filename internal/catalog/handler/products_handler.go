@@ -144,15 +144,22 @@ func (h *ProductsHandlerImpl) GetProductById(c *gin.Context) {
 }
 
 func (h *ProductsHandlerImpl) UpdateProduct(c *gin.Context) {
-	var req dto.ProductRequest
-	err := c.ShouldBindJSON(&req)
+	id := c.Param("id")
+	parsedId, err := strconv.Atoi(id)
 	if err != nil {
+		c.JSON(400, response.Error{Message: "failed to parse id", Code: "FAILED_TO_PARSE_ID"})
+		return
+	}
+
+	var req dto.ProductRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(400, response.Error{Message: "failed to bind request", Code: "FAILED_TO_BIND"})
 		return
 	}
 
 	ctx := c.Request.Context()
 	product := toDomainProduct(&req)
+	product.Id = parsedId
 
 	err = h.svc.UpdateProduct(ctx, product)
 	if err != nil {

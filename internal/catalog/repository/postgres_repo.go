@@ -65,19 +65,35 @@ func (r *ProductRepoImpl) GetAllProducts(ctx context.Context, isActive *bool, li
 }
 
 func (r *ProductRepoImpl) UpdateProduct(ctx context.Context, product *domain.Product) error {
-	_, err := r.q.ExecContext(ctx, `UPDATE products SET name = $1, price = $2, stock_quantity = $3, is_active = $4 WHERE id = $5`, product.Name, product.Price, product.StockQuantity, product.IsActive, product.Id)
+	res, err := r.q.ExecContext(ctx, `UPDATE products SET name = $1, price = $2, stock_quantity = $3, is_active = $4 WHERE id = $5`, product.Name, product.Price, product.StockQuantity, product.IsActive, product.Id)
 	if err != nil {
 		slog.Error("error updating product from database", "error", err)
 		return err
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		slog.Error("error getting rows affected", "error", err)
+		return err
+	}
+	if affected == 0 {
+		return errs.ProductNotFound
 	}
 	return nil
 }
 
 func (r *ProductRepoImpl) DeleteProduct(ctx context.Context, productId int) error {
-	_, err := r.q.ExecContext(ctx, `UPDATE products SET is_active = false WHERE id = $1`, productId)
+	res, err := r.q.ExecContext(ctx, `UPDATE products SET is_active = false WHERE id = $1`, productId)
 	if err != nil {
 		slog.Error("error deleting product from database", "error", err)
 		return err
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		slog.Error("error getting rows affected", "error", err)
+		return err
+	}
+	if affected == 0 {
+		return errs.ProductNotFound
 	}
 	return nil
 }
