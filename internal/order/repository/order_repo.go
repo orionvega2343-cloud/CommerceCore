@@ -6,6 +6,7 @@ import (
 	"CommerceCore/pkg/querier"
 	"CommerceCore/pkg/transaction"
 	"context"
+	"database/sql"
 	"log/slog"
 )
 
@@ -88,10 +89,18 @@ func (r *OrderRepoImpl) UpdateStatus(ctx context.Context, id int, status string)
 	if tx, ok := transaction.ExtractTx(ctx); ok {
 		q = tx
 	}
-	_, err := q.ExecContext(ctx, `UPDATE orders SET status = $1 WHERE id = $2`, status, id)
+	res, err := q.ExecContext(ctx, `UPDATE orders SET status = $1 WHERE id = $2`, status, id)
 	if err != nil {
 		slog.Error("failed to update order", "error", err)
 		return err
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		slog.Error("failed to get rows affected", "error", err)
+		return err
+	}
+	if affected == 0 {
+		return sql.ErrNoRows
 	}
 	return nil
 }
