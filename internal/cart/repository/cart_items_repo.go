@@ -2,6 +2,7 @@ package repository
 
 import (
 	"CommerceCore/internal/cart/domain"
+	"CommerceCore/internal/cart/domain/errs"
 	"CommerceCore/pkg/querier"
 	"CommerceCore/pkg/transaction"
 	"context"
@@ -26,10 +27,18 @@ func (r *CartItemRepoImpl) Create(ctx context.Context, item *domain.CartItem) (*
 }
 
 func (r *CartItemRepoImpl) Update(ctx context.Context, item *domain.CartItem) error {
-	_, err := r.q.ExecContext(ctx, `UPDATE cart_items SET quantity = $1 WHERE id = $2`, item.Quantity, item.Id)
+	res, err := r.q.ExecContext(ctx, `UPDATE cart_items SET quantity = $1 WHERE id = $2`, item.Quantity, item.Id)
 	if err != nil {
 		slog.Error("failed update items", "error", err)
 		return err
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		slog.Error("failed to get rows affected", "error", err)
+		return err
+	}
+	if affected == 0 {
+		return errs.CartItemNotFound
 	}
 	return nil
 }

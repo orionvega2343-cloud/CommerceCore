@@ -5,14 +5,32 @@ import (
 	"CommerceCore/internal/cart/domain/errs"
 	"CommerceCore/internal/cart/dto"
 	"CommerceCore/internal/cart/service"
+	catalogErrs "CommerceCore/internal/catalog/domain/errs"
 	"CommerceCore/pkg/response"
 	"CommerceCore/pkg/utils"
+	"errors"
 	"log/slog"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
+
+// mapServiceError - переводит доменную ошибку сервиса в HTTP-статус
+func mapServiceError(err error) int {
+	switch {
+	case errors.Is(err, errs.CartNotFound), errors.Is(err, errs.CartItemNotFound):
+		return http.StatusNotFound
+	case errors.Is(err, errs.ProductNotFound), errors.Is(err, catalogErrs.ProductNotFound):
+		return http.StatusNotFound
+	case errors.Is(err, errs.FailedCheckedOut):
+		return http.StatusConflict
+	case errors.Is(err, errs.InvalidCartItemCap):
+		return http.StatusBadRequest
+	default:
+		return http.StatusInternalServerError
+	}
+}
 
 type CartHandlerImpl struct {
 	svc service.CartServiceImpl
@@ -136,7 +154,7 @@ func (h *CartHandlerImpl) Update(c *gin.Context) {
 
 	ctx := c.Request.Context()
 	if err = h.svc.Update(ctx, item); err != nil {
-		c.JSON(http.StatusInternalServerError, response.Error{Message: err.Error(), Code: "FAILED_UPDATE_ITEM"})
+		c.JSON(mapServiceError(err), response.Error{Message: err.Error(), Code: "FAILED_UPDATE_ITEM"})
 		return
 	}
 	c.JSON(http.StatusOK, toCartItemResponse(item))
@@ -181,7 +199,7 @@ func (h *CartHandlerImpl) AddItemToCart(c *gin.Context) {
 
 	cart, err := h.svc.AddItemToCart(ctx, cookie, req.ProductId, req.Quantity)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.Error{Message: err.Error(), Code: "FAILED_ADD_CART"})
+		c.JSON(mapServiceError(err), response.Error{Message: err.Error(), Code: "FAILED_ADD_CART"})
 		return
 	}
 	c.JSON(http.StatusOK, toCartResponse(cart))
@@ -200,7 +218,7 @@ func (h *CartHandlerImpl) UpdateItemIntoCart(c *gin.Context) {
 
 	cart, err := h.svc.UpdateItemIntoCart(ctx, cookie, req.ProductId, req.Quantity)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.Error{Message: err.Error(), Code: "FAILED_UPDATE_ITEM"})
+		c.JSON(mapServiceError(err), response.Error{Message: err.Error(), Code: "FAILED_UPDATE_ITEM"})
 		return
 	}
 	c.JSON(http.StatusOK, toCartResponse(cart))
@@ -216,7 +234,7 @@ func (h *CartHandlerImpl) DeleteItemIntoCart(c *gin.Context) {
 	}
 	err = h.svc.DeleteItemIntoCart(ctx, cookie, productId)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.Error{Message: err.Error(), Code: "FAILED_DELETE_ITEM"})
+		c.JSON(mapServiceError(err), response.Error{Message: err.Error(), Code: "FAILED_DELETE_ITEM"})
 		return
 	}
 	c.JSON(http.StatusNoContent, gin.H{})
