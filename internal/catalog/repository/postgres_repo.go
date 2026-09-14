@@ -6,6 +6,8 @@ import (
 	"CommerceCore/pkg/querier"
 	"CommerceCore/pkg/transaction"
 	"context"
+	"database/sql"
+	"errors"
 	"log/slog"
 )
 
@@ -32,6 +34,9 @@ func (r *ProductRepoImpl) CreateProduct(ctx context.Context, product *domain.Pro
 func (r *ProductRepoImpl) GetProductById(ctx context.Context, productId int) (*domain.Product, error) {
 	var p domain.Product
 	err := r.q.GetContext(ctx, &p, `SELECT id, name, price, stock_quantity, is_active FROM products WHERE id = $1`, productId)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, errs.ProductNotFound
+	}
 	if err != nil {
 		slog.Error("error getting product from database", "error", err)
 		return nil, err
@@ -60,7 +65,7 @@ func (r *ProductRepoImpl) GetAllProducts(ctx context.Context, isActive *bool, li
 }
 
 func (r *ProductRepoImpl) UpdateProduct(ctx context.Context, product *domain.Product) error {
-	_, err := r.q.ExecContext(ctx, `UPDATE products SET price = $1, stock_quantity = $2 WHERE id = $3`, product.Price, product.StockQuantity, product.Id)
+	_, err := r.q.ExecContext(ctx, `UPDATE products SET name = $1, price = $2, stock_quantity = $3, is_active = $4 WHERE id = $5`, product.Name, product.Price, product.StockQuantity, product.IsActive, product.Id)
 	if err != nil {
 		slog.Error("error updating product from database", "error", err)
 		return err

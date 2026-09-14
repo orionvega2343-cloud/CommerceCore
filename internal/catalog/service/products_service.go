@@ -19,12 +19,7 @@ func NewProductService(repo domain.ProductRepo, cache domain.ProductCache) *Prod
 	return &ProductServiceImpl{repo: repo, cache: cache}
 }
 
-func (p *ProductServiceImpl) CreateProduct(ctx context.Context, product *domain.Product) (*domain.Product, error) {
-	role, ok := ctx.Value("role").(string)
-	if !ok {
-		return nil, errs.InvalidRole
-	}
-
+func (p *ProductServiceImpl) CreateProduct(ctx context.Context, product *domain.Product, role string) (*domain.Product, error) {
 	if role != "admin" {
 		return nil, errs.InvalidRole
 	}
