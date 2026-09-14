@@ -47,19 +47,35 @@ func (r *UserRepoImpl) GetUserByEmail(ctx context.Context, email string) (domain
 }
 
 func (r *UserRepoImpl) UpdateUser(ctx context.Context, m domain.User) error {
-	_, err := r.q.ExecContext(ctx, `UPDATE users SET email = $1, password = $2 WHERE id = $3`, m.Email, m.Password, m.Id)
+	res, err := r.q.ExecContext(ctx, `UPDATE users SET email = $1, password = $2 WHERE id = $3`, m.Email, m.Password, m.Id)
 	if err != nil {
 		slog.Error("failed to connect to database", "error", err)
 		return err
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		slog.Error("failed to get rows affected", "error", err)
+		return err
+	}
+	if affected == 0 {
+		return domain.FailedToGetUser
 	}
 	return nil
 }
 
 func (r *UserRepoImpl) UpdateUserRole(ctx context.Context, role, id string) error {
-	_, err := r.q.ExecContext(ctx, `UPDATE users SET role = $1 WHERE id = $2`, role, id)
+	res, err := r.q.ExecContext(ctx, `UPDATE users SET role = $1 WHERE id = $2`, role, id)
 	if err != nil {
 		slog.Error("failed to connect to database", "error", err)
 		return err
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		slog.Error("failed to get rows affected", "error", err)
+		return err
+	}
+	if affected == 0 {
+		return domain.FailedToGetUser
 	}
 	return nil
 }
