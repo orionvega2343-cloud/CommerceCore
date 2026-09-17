@@ -21,8 +21,8 @@ type UserServiceImpl struct {
 	secret string
 }
 
-func NewUserServiceImpl(repo domain.UserRepo, secret string) *UserServiceImpl {
-	return &UserServiceImpl{repo: repo, secret: secret}
+func NewUserServiceImpl(repo domain.UserRepo, cartSvc cart.CartService, secret string) *UserServiceImpl {
+	return &UserServiceImpl{repo: repo, cart: cartSvc, secret: secret}
 }
 
 // Register - функция для хэширования пользовательского пароля,
